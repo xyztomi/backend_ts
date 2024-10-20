@@ -7,7 +7,7 @@
     "allowJs": true,
     "resolveJsonModule": true,
     "moduleDetection": "force",
-    "isolatedModules": true,
+    "isolatedModules": false,
     "verbatimModuleSyntax": false,
     // Enable strict type checking so you can catch bugs early
     "strict": true,
