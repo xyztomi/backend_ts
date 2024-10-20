@@ -4,7 +4,6 @@ import {
   loginUser,
   registerUser,
 } from "../controllers/userController";
-import { authenticateToken } from "../middleware/auth";
 
 export const userRouter: Router = Router();
 

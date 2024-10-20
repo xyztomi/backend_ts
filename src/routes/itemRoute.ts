@@ -1,19 +1,35 @@
 import { Router } from "express";
-import { getAllItem, createItem } from "../controllers/itemController";
+import {
+  getAllItem,
+  createItem,
+  getItemById,
+  updateItem,
+  deleteItem,
+} from "../controllers/itemController";
 import { authenticateToken } from "../middleware/auth";
 import { upload } from "../middleware/upload";
 
 export const itemRouter: Router = Router();
 
-itemRouter.get("/api/item", authenticateToken, getAllItem);
-itemRouter.get("/api/item/:id");
-
+// CREATE
 itemRouter.post(
   "/api/item/post",
   authenticateToken,
   upload.single("image_url"),
   createItem,
 );
-itemRouter.patch("/api/item/:id");
-itemRouter.delete("/api/item/:id");
-// todo: make get and post
+
+// READ
+itemRouter.get("/api/item", getAllItem);
+itemRouter.get("/api/item/:id", getItemById);
+
+// UPDATE
+itemRouter.patch(
+  "/api/item/:id",
+  authenticateToken,
+  upload.single("image_url"),
+  updateItem,
+);
+
+// DELETE
+itemRouter.delete("/api/item/:id", authenticateToken, deleteItem);

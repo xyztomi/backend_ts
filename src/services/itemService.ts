@@ -9,11 +9,16 @@ interface createItemDTO {
   categoryId: number;
 }
 
-export const getAllItemService = async () => {
-  const allItem = await prismaClient.item.findMany();
-  return allItem;
-};
+interface UpdateItemDTO {
+  id: number;
+  title?: string;
+  description?: string;
+  status?: string;
+  image_url?: string;
+  categoryId?: number;
+}
 
+// CREATE
 export const createItemService = async (data: createItemDTO) => {
   const { title, description, status, image_url, userId, categoryId } = data;
 
@@ -69,4 +74,53 @@ export const createItemService = async (data: createItemDTO) => {
   });
 
   return newItem;
+};
+
+// READ
+export const getAllItemService = async () => {
+  const allItem = await prismaClient.item.findMany();
+  return allItem;
+};
+
+export const getItemByIdService = async (id: number) => {
+  const item = await prismaClient.item.findUnique({
+    where: { id },
+  });
+  return item;
+};
+
+// UPDATE
+export const updateItemService = async (data: UpdateItemDTO) => {
+  const { id, title, description, status, image_url, categoryId } = data;
+
+  // Check if item exists
+  const itemExists = await prismaClient.item.findUnique({
+    where: { id },
+  });
+
+  if (!itemExists) {
+    throw new Error(`Item dengan id: ${id} tidak ditemukan.`);
+  }
+
+  // Update item
+  const updatedItem = await prismaClient.item.update({
+    where: { id },
+    data: {
+      title: title || itemExists.title, // If title not provided, keep the old value
+      description: description || itemExists.description,
+      status: status || itemExists.status,
+      image_url: image_url || itemExists.image_url,
+      category: categoryId ? { connect: { id: categoryId } } : undefined, // Only update if categoryId is provided
+    },
+  });
+
+  return updatedItem;
+};
+
+// DELETE
+export const deleteItemService = async (id: number) => {
+  const item = await prismaClient.item.delete({
+    where: { id },
+  });
+  return item;
 };
