@@ -1,10 +1,13 @@
-import jwt, { Secret } from "jsonwebtoken";
+import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 
 export const SECRET_KEY: Secret = "rahasia";
+export interface RequestUser extends Request {
+  user?: { userId: number };
+}
 
 export const authenticateToken = (
-  req: Request,
+  req: RequestUser,
   res: Response,
   next: NextFunction,
 ): void => {
@@ -21,8 +24,9 @@ export const authenticateToken = (
       res.status(403).json({ msg: "Invalid token" });
       return;
     }
-
-    console.log(decoded);
+    if (decoded && typeof decoded !== "string") {
+      req.user = { userId: decoded.userId as number }; // Assign userId to req.user
+    }
     next();
   });
 };

@@ -6,6 +6,7 @@ import {
   updateItemService,
   deleteItemService,
 } from "../services/itemService";
+import { RequestUser } from "../middleware/auth";
 
 // CREATE
 export const createItem = async (
@@ -57,13 +58,14 @@ export const getItemById = async (
 
 // UPDATE
 export const updateItem = async (
-  req: Request,
+  req: RequestUser,
   res: Response,
   next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
     const { title, description, status, categoryId } = req.body;
+    const userId = req.user?.userId;
     const image_url = req.file ? `/images/${req.file.filename}` : undefined;
 
     const updatedItem = await updateItemService({
@@ -73,6 +75,7 @@ export const updateItem = async (
       status,
       image_url,
       categoryId,
+      userId,
     });
 
     res.status(200).json({ msg: "Item berhasil diedit.", updatedItem });
@@ -83,13 +86,14 @@ export const updateItem = async (
 
 // DELETE
 export const deleteItem = async (
-  req: Request,
+  req: RequestUser,
   res: Response,
   next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
-    const deletedItem = await deleteItemService(Number(id));
+    const userId = req.user?.userId;
+    const deletedItem = await deleteItemService(Number(id), Number(userId));
     res.status(200).json({ msg: "Item berhasil dihapus.", deletedItem });
   } catch (e) {
     next(e);

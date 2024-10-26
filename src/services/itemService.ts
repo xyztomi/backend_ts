@@ -16,6 +16,7 @@ interface UpdateItemDTO {
   status?: string;
   image_url?: string;
   categoryId?: number;
+  userId?: number;
 }
 
 // CREATE
@@ -91,7 +92,8 @@ export const getItemByIdService = async (id: number) => {
 
 // UPDATE
 export const updateItemService = async (data: UpdateItemDTO) => {
-  const { id, title, description, status, image_url, categoryId } = data;
+  const { id, title, description, status, image_url, categoryId, userId } =
+    data;
 
   // Check if item exists
   const itemExists = await prismaClient.item.findUnique({
@@ -100,6 +102,10 @@ export const updateItemService = async (data: UpdateItemDTO) => {
 
   if (!itemExists) {
     throw new Error(`Item dengan id: ${id} tidak ditemukan.`);
+  }
+
+  if (itemExists.userId !== userId) {
+    throw new Error(`User tidak memiliki akses untuk mengedit item ini.`);
   }
 
   // Update item
@@ -118,9 +124,22 @@ export const updateItemService = async (data: UpdateItemDTO) => {
 };
 
 // DELETE
-export const deleteItemService = async (id: number) => {
-  const item = await prismaClient.item.delete({
+export const deleteItemService = async (id: number, userId: number) => {
+  const item = await prismaClient.item.findUnique({
     where: { id },
   });
-  return item;
+
+  if (!item) {
+    throw new Error(`Item dengan id: ${id} tidak ditemukan.`);
+  }
+
+  if (item.userId !== userId) {
+    throw new Error(`User tidak memiliki akses untuk menghapus item ini.`);
+  }
+
+  const deletedItem = await prismaClient.item.delete({
+    where: { id },
+  });
+
+  return deletedItem;
 };
