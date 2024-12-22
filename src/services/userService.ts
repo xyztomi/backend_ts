@@ -51,10 +51,24 @@ export const loginUserService = async (username: string, password: string) => {
 
   const token = jwt.sign({ userId: user.id }, SECRET_KEY, { expiresIn: "1d" });
   const userInfo = user.username;
-  return { token, userInfo };
+  const userId = user.id;
+
+  return { token, userInfo, userId };
 };
 
 export const getAllUserService = async () => {
   const allUser = await prismaClient.user.findMany();
   return allUser;
+};
+
+export const getUserByIdService = async (userId: any) => {
+  const userWithPosts = await prismaClient.user.findUnique({
+    where: {
+      id: userId,
+    },
+    include: {
+      items: true,
+    },
+  });
+  return userWithPosts;
 };

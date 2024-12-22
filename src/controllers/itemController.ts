@@ -10,7 +10,7 @@ import { RequestUser } from "../middleware/auth";
 
 // CREATE
 export const createItem = async (
-  req: Request,
+  req: RequestUser,
   res: Response,
   next: NextFunction,
 ) => {
@@ -18,9 +18,16 @@ export const createItem = async (
   console.log("File:", req.file);
 
   try {
-    // extract image_url dari multer req.file
+    // extract image_url from multer req.file
     const image_url = req.file ? `/images/${req.file.filename}` : undefined;
-    const data = { ...req.body, image_url };
+
+    // Use userId from authenticated user
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ msg: "User not authenticated." });
+    }
+
+    const data = { ...req.body, image_url, userId }; // Include userId here
 
     const newItem = await createItemService(data);
     console.log(newItem);
@@ -31,9 +38,14 @@ export const createItem = async (
 };
 
 // READ
-export const getAllItem = async (_: any, res: Response, next: NextFunction) => {
+export const getAllItem = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const data = await getAllItemService();
+    const status = req.query.status;
+    const data = await getAllItemService(status);
     res.status(200).json(data);
   } catch (e) {
     res.sendStatus(400);
@@ -74,7 +86,7 @@ export const updateItem = async (
       description,
       status,
       image_url,
-      categoryId,
+      categoryId: Number(categoryId),
       userId,
     });
 

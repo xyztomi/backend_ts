@@ -3,6 +3,7 @@ import {
   getAllUserService,
   loginUserService,
   registerUserService,
+  getUserByIdService,
 } from "../services/userService";
 
 export const registerUser = async (
@@ -34,6 +35,7 @@ export const loginUser = async (
       data: {
         token: userLoginToken.token,
         username: userLoginToken.userInfo,
+        userId: userLoginToken.userId,
       },
     });
   } catch (e) {
@@ -47,5 +49,20 @@ export const getAllUser = async (_: any, res: Response, next: NextFunction) => {
     res.status(200).json(data);
   } catch (e) {
     next(e);
+  }
+};
+
+export const getUserById = async (
+  request: Request,
+  response: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { id } = request.params;
+    const data = await getUserByIdService(Number(id));
+    response.status(200).json(data);
+  } catch (error) {
+    response.sendStatus(400);
+    next(error);
   }
 };

@@ -19,50 +19,43 @@ interface UpdateItemDTO {
   userId?: number;
 }
 
-// CREATE
 export const createItemService = async (data: createItemDTO) => {
   const { title, description, status, image_url, userId, categoryId } = data;
 
-  // convert req.body id to number
+  // Ensure all required fields are provided
+  if (!title || !description || !status || !image_url || !userId || !categoryId) {
+    throw new Error("All fields (title, description, status, image_url, userId, categoryId) must be provided.");
+  }
+
   const parsedUserId = parseInt(userId.toString());
   const parsedCategoryId = parseInt(categoryId.toString());
 
-  if (!title) {
-    throw new Error("Title harus diisi.");
-  }
-  if (!description) {
-    throw new Error("Deskripsi harus diisi.");
-  }
-  if (!status) {
-    throw new Error("Status harus diisi.");
-  }
-  if (!image_url) {
-    throw new Error("URL gambar harus diisi.");
-  }
+  // Check for valid User ID and Category ID
   if (isNaN(parsedUserId)) {
-    throw new Error("User ID harus berupa angka.");
-  }
-  if (isNaN(parsedCategoryId)) {
-    throw new Error("Category ID harus berupa angka.");
+    throw new Error("User ID must be a number.");
   }
 
-  // check user id
+  if (isNaN(parsedCategoryId)) {
+    throw new Error("Category ID must be a number.");
+  }
+
+  // Check if the user exists
   const userExists = await prismaClient.user.findUnique({
-    where: { id: parsedUserId }, // id is now an integer
+    where: { id: parsedUserId },
   });
   if (!userExists) {
-    throw new Error(`User id: ${parsedUserId} tidak ditemukan.`);
+    throw new Error(`User with ID: ${parsedUserId} not found.`);
   }
 
-  // check kategori
+  // Check if the category exists
   const categoryExists = await prismaClient.category.findUnique({
-    where: { id: parsedCategoryId }, // id is now an integer
+    where: { id: parsedCategoryId },
   });
   if (!categoryExists) {
-    throw new Error(`Kategori id: ${parsedCategoryId} tidak ditemukan.`);
+    throw new Error(`Category with ID: ${parsedCategoryId} not found.`);
   }
 
-  // query item baru
+  // Create the new item
   const newItem = await prismaClient.item.create({
     data: {
       title,
@@ -77,15 +70,36 @@ export const createItemService = async (data: createItemDTO) => {
   return newItem;
 };
 
+
 // READ
-export const getAllItemService = async () => {
-  const allItem = await prismaClient.item.findMany();
-  return allItem;
+export const getAllItemService = async (status: any) => {
+  const whereClause = status && status !== "all" ? { status } : {};
+  const allItems = await prismaClient.item.findMany({
+    where: whereClause,
+    include: {
+      User: {
+        select: {
+          username: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return allItems;
 };
 
 export const getItemByIdService = async (id: number) => {
   const item = await prismaClient.item.findUnique({
     where: { id },
+    include: {
+      User: {
+        select: {
+          username: true,
+        },
+      },
+    },
   });
   return item;
 };
@@ -95,7 +109,6 @@ export const updateItemService = async (data: UpdateItemDTO) => {
   const { id, title, description, status, image_url, categoryId, userId } =
     data;
 
-  // Check if item exists
   const itemExists = await prismaClient.item.findUnique({
     where: { id },
   });
@@ -108,15 +121,14 @@ export const updateItemService = async (data: UpdateItemDTO) => {
     throw new Error(`User tidak memiliki akses untuk mengedit item ini.`);
   }
 
-  // Update item
   const updatedItem = await prismaClient.item.update({
     where: { id },
     data: {
-      title: title || itemExists.title, // If title not provided, keep the old value
+      title: title || itemExists.title,
       description: description || itemExists.description,
       status: status || itemExists.status,
       image_url: image_url || itemExists.image_url,
-      category: categoryId ? { connect: { id: categoryId } } : undefined, // Only update if categoryId is provided
+      category: categoryId ? { connect: { id: categoryId } } : undefined,
     },
   });
 
